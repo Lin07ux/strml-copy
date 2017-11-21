@@ -16,30 +16,34 @@ module.exports = {
   },
   devtool: 'eval-source-map',
   devServer: {
-    contentBase: path.join(dist, "assets"),
+    contentBase: dist,
     historyApiFallback: true,
     inline: true,
     compress: true,
     port: 4003,
   },
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.js?$/,
-        loader: 'babel-loader',
+        use: 'babel-loader',
         include: path.join(__dirname, "src"),
       },
       {
-        test: /\.(htm|html)$/i,
-        loader: 'html-withimg-loader'
+        test: /\.(htm|html)$/,
+        use: 'html-withimg-loader?min=false'
+      },
+      {
+        test: /\.(txt|css)$/,
+        use: 'raw-loader'
       },
       {
         test: /\.(png|jpg|jpeg|svg|gif)$/,
-        loader: 'file-loader?name=images/[name].[hash:8].[ext]'
+        use: 'file-loader?name=images/[name].[hash:8].[ext]'
       },
       {
         test: /\.ico$/,
-        loader: 'file-loader?name=../[name].[ext]'
+        use: 'file-loader?name=../[name].[ext]'
       }
     ]
   },
@@ -49,7 +53,7 @@ module.exports = {
     new webpack.optimize.UglifyJsPlugin({compress: {warnings: false}}),
     new HtmlWebpackPlugin({
       filename: path.join(dist, 'index.html'),
-      template: path.join(__dirname, '/src/index.html')
+      template: './src/index.html'
     })
   ],
   resolve: {
