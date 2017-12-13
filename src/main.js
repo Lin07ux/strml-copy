@@ -5,7 +5,7 @@ import Promise from 'bluebird'
 import Markdown from 'markdown'
 
 import getPrefix from './lib/getPrefix.js'
-import { default as writeChar } from './lib/writeChar.js'
+import { default as writeChar, writeStyleChar } from './lib/writeChar.js'
 
 import preStyle from './css/prestyles.css'
 
@@ -122,8 +122,8 @@ async function writeTo(el, message, start, interval, charsPerInterval, mirrorToS
   let chars = message.slice(start, start + charsPerInterval)
   start += charsPerInterval
 
-  // Write chars to element
-  writeChar(el, chars)
+  // If this is going to <style> it's more complex; otherwise, just write.
+  mirrorToStyle ? writeStyleChar(el, chars, style) : writeChar(el, chars)
 
   // Ensure we stay scrolled to the bottom.
   el.scrollTop = el.scrollHeight
