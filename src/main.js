@@ -5,6 +5,8 @@ import Promise from 'bluebird'
 import Markdown from 'markdown'
 
 import getPrefix from './lib/getPrefix.js'
+import { default as writeChar } from './lib/writeChar.js'
+
 import preStyle from './css/prestyles.css'
 
 let styleText = [0, 1, 2, 3].map(i => require('./css/style-' + i + '.css'))
@@ -20,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   getBrowserPrefix()
   initStyleAndRefs()
   createEventHandlers()
+  startAnimation()
 })
 
 /**
@@ -79,4 +82,71 @@ function createEventHandlers () {
     pauseEl.textContent = paused ? 'Pause ||' : 'Resume >>'
     paused = !paused
   })
+}
+
+/**
+ * Start animation
+ *
+ * @return {void}
+ */
+async function startAnimation () {
+  try {
+    await writeTo(styleEl, styleText[0], 0, speed, 1, true)
+  } catch (e) {
+    if (e.message == 'SKIP IT') {
+      skipAnimation()
+    } else {
+      throw e
+    }
+  }
+}
+
+let endOfSentence = /[\.\?\!]\s$/  // 以 ./?/! 结束，后面跟随一个空格的表示语句结尾
+let endOfBlock = /[^\/]\n\n$/  // 连续两个 \n 换行符表示一个块，注释结束的块不延迟
+let comma = /\D\,\s$/   // \D 避免匹配到数字的千分位分隔符
+
+/**
+ * Write message to element
+ * @param  {DOM}    el               写入的元素
+ * @param  {String} message          待写入的信息
+ * @param  {Int}    start            开始写入的位置
+ * @param  {Int}    interval         写入间隔(ms)
+ * @param  {Int}    charsPerInterval 每次写入的字符数
+ * @param  {Bool}   mirrorToStyle    是否映射到样式中
+ * @return {Promise|void}
+ */
+async function writeTo(el, message, start, interval, charsPerInterval, mirrorToStyle) {
+  if (animationSkipped) throw new Error('SKIP IT')
+
+  // Those characters that are going to be written to the buffer.
+  let chars = message.slice(start, start + charsPerInterval)
+  start += charsPerInterval
+
+  // Write chars to element
+  writeChar(el, chars)
+
+  // Ensure we stay scrolled to the bottom.
+  el.scrollTop = el.scrollHeight
+
+  // Schedule another write.
+  if (start < message.length) {
+    let checkSlice = message.slice(start - 2, start + 1)
+    let thisInterval = interval
+
+    if (endOfSentence.test(checkSlice)) thisInterval = interval * 70
+    else if (endOfBlock.test(checkSlice)) thisInterval = interval * 50
+    else if (comma.test(checkSlice)) thisInterval = interval * 30
+
+    // Delay a period of time until cancel the pause.
+    do {
+      await Promise.delay(thisInterval)
+    } while (paused)
+
+    // Start another write.
+    return writeTo(el, message, start, interval, charsPerInterval, mirrorToStyle)
+  }
+}
+
+function skipAnimation () {
+  // TODO
 }
