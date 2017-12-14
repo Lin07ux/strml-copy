@@ -13,7 +13,7 @@ let styleText = [0, 1, 2, 3].map(i => require('./css/style-' + i + '.css'))
 
 const md = Markdown.markdown.toHtml
 const isDev = window.location.hostname === 'localhost'
-const speed = isDev ? 16 : 16
+const speed = isDev ? 0 : 16
 let style, styleEl, workEl, pgpEl, skipAnimationEl, pauseEl;
 let animationSkipped = false, done = false, paused = false;
 let browserPrefix;
