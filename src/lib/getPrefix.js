@@ -7,9 +7,11 @@ export default function generatePrefix() : string {
   const prefixes = ['ms', 'O', 'Moz', 'Webkit']
   const style = window.document.documentElement.style
 
-  if (!('tranform' in style)) {
+  if (!('transform' in style)) {
     for (let i = prefixes.length - 1; i >= 0; i--) {
-      if (prefixes[i] + 'Transform' in style) return prefixes[i]
+      if (prefixes[i] + 'Transform' in style) {
+        return '-' + prefixes[i].toLowerCase() + '-'
+      }
     }
   }
 
