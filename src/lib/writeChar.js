@@ -6,9 +6,12 @@ export default function writeChar (el, char) {
 // 否则可能会造成部分内容的丢失
 // id 处理的元素的 id 属性；content 已处理完成的文本；buffer 待处理的内容
 // 将处理过的文本和未处理过的文本分开存放可以避免过多的正则查询
-const fullText = { id: '', content: '', buffer: '' }
+let fullText = { id: '', content: '', buffer: '' }
 let styleBuffer = ''
+// 开始注释
 let openComment = false
+// 开始设置 css 属性(避免选择器中的伪类的 : 与属性设置时的 : 混淆)
+let openBlock = false
 
 /**
  * 写入样式字符
@@ -20,13 +23,8 @@ let openComment = false
 export function writeStyleChar (el, char, style) {
   // 如果传入的元素的 ID 和当前缓存的内容的 ID 不同，则重置缓存
   // 设置缓存可以避免每次都要从 DOM 中读取
-  if (fullText.id !== el.id) {
-    fullText.id = el.id
-    fullText.content = el.innerHTML
-    fullText.buffer = ''
-  }
+  fullText.id !== el.id && resetInit(el)
 
-  // debugger
 
   // 缓存处理字符全文之前是否是注释，避免处理后该值发生变化
   let openCommentTemp = openComment
@@ -47,15 +45,56 @@ export function writeStyleChar (el, char, style) {
   }
 }
 
+/**
+ * 重置初始设置
+ * @param  {DOM} el 新的需要处理的元素
+ * @return {void}
+ */
+function resetInit (el) {
+  openComment = openBlock = false
+  fullText = { id: el.id, content: el.innerHTML, buffer: '' }
+}
+
 function handleStyle (char) {
+  // 如果处于注释状态，而且当前字符不是 / 则直接存在 buffer 中即可
+  if (openComment && char !== '/') return fullText.buffer += char
+
   let hasBuffer = fullText.buffer.length > 0
 
   switch (char) {
     case '/':
       handleSlashChar()
       break
-    default:
+    case '{':
+      fullText.content += '<span class="selector">' + fullText.buffer + '</span>{'
+      fullText.buffer = ''
+      openBlock = true
+      break
+    case '}':
+      fullText.content += fullText.buffer + '}'
+      fullText.buffer = ''
+      openBlock = false
+      break
+    case ':':
+      if (openBlock) {
+        fullText.content += '<span class="key">' + fullText.buffer + '</span>:'
+        fullText.buffer = ''
+      } else {
+        fullText.buffer += ':'
+      }
+      break
+    case ';':
+      fullText.content += '<span class="value">' + fullText.buffer + '</span>;'
+      fullText.buffer = ''
+      break
+    case ' ':
+    case '\n':
+    case '\t':
+      // 空白字符不需处理，可直接附加到 buffer 或 content 中
       hasBuffer ? (fullText.buffer += char) : (fullText.content += char)
+      break
+    default:
+      fullText.buffer += char
   }
 }
 
@@ -65,15 +104,17 @@ function handleStyle (char) {
  * @return {void}
  */
 function handleSlashChar () {
-  fullText.buffer += '/'
-
   if (!openComment) {
     // 未开启注释则开启
     openComment = true
-  } else if (fullText.buffer.slice(-2) === '*/') {
+    if (fullText.buffer.length) fullText.content += fullText.buffer
+    fullText.buffer = '/'
+  } else if (fullText.buffer.slice(-1) === '*') {
     // 否则如果符合结束注释的条件则结束注释，并将 buffer 写入到 content 中
     openComment = false
-    fullText.content += '<span class="comment">' + fullText.buffer + '</span>'
+    fullText.content += '<span class="comment">' + fullText.buffer + '/</span>'
     fullText.buffer = ''
+  } else {
+    fullText.buffer += '/'
   }
 }

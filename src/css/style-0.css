@@ -72,12 +72,11 @@ pre:not(:empty) {
  * Let's make it even more readable.
  */
 
-.comment       { color: #857F6B; font-style: italic; }
-.selector      { color: #E69F0F; }
-.selector .key { color: #64D5EA; }
-.key           { color: #64D5EA; }
-.value         { color: #BE84F2; }
-.value.px      { color: #F92772; }
+.comment  { color: #857F6B; font-style: italic; }
+.selector { color: #E69F0F; }
+.key      { color: #64D5EA; }
+.value    { color: #BE84F2; }
+.value.px { color: #F92772; }
 
 /**
  * Now we're getting somewhere.
