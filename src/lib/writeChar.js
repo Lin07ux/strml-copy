@@ -55,11 +55,17 @@ function resetInit (el) {
   fullText = { id: el.id, content: el.innerHTML, buffer: '' }
 }
 
+// 匹配样式值中设置的 px
+const pxRegex = /\dpx$/
+
+/**
+ * 处理样式字符
+ * @param  {String} char 当前要添加的字符
+ * @return {void}
+ */
 function handleStyle (char) {
   // 如果处于注释状态，而且当前字符不是 / 则直接存在 buffer 中即可
   if (openComment && char !== '/') return fullText.buffer += char
-
-  let hasBuffer = fullText.buffer.length > 0
 
   switch (char) {
     case '/':
@@ -87,11 +93,17 @@ function handleStyle (char) {
       fullText.content += '<span class="value">' + fullText.buffer + '</span>;'
       fullText.buffer = ''
       break
+    case 'x':
+      fullText.buffer += 'x'
+      if (pxRegex.test(fullText.buffer)) {
+        fullText.buffer = fullText.buffer.slice(0, -2) + '<span class="px">px</span>'
+      }
+      break
     case ' ':
     case '\n':
     case '\t':
       // 空白字符不需处理，可直接附加到 buffer 或 content 中
-      hasBuffer ? (fullText.buffer += char) : (fullText.content += char)
+      fullText.buffer.length ? (fullText.buffer += char) : (fullText.content += char)
       break
     default:
       fullText.buffer += char
