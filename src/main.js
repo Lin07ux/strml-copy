@@ -5,13 +5,14 @@ import Promise from 'bluebird'
 import Markdown from 'markdown'
 
 import getPrefix from './lib/getPrefix.js'
+import replaceURLs from './lib/replaceURLs.js'
 import { default as writeChar, writeStyleChar } from './lib/writeChar.js'
 
+import workText from './text/work.txt'
 import preStyle from './css/prestyles.css'
 
 let styleText = [0, 1, 2, 3].map(i => require('./css/style-' + i + '.css'))
 
-const md = Markdown.markdown.toHtml
 const isDev = window.location.hostname === 'localhost'
 const speed = isDev ? 0 : 16
 let style, styleEl, workEl, pgpEl, skipAnimationEl, pauseEl;
@@ -92,6 +93,11 @@ function createEventHandlers () {
 async function startAnimation () {
   try {
     await writeTo(styleEl, styleText[0], 0, speed, 1, true)
+    await writeTo(workEl, workText, 0, speed, 1, false)
+    await writeTo(styleEl, styleText[1], 0, speed, 1, true)
+    createWorkBox()
+    await Promise.delay(1000)
+    await writeTo(styleEl, styleText[2], 0, speed, 1, true)
   } catch (e) {
     if (e.message == 'SKIP IT') {
       skipAnimation()
@@ -145,6 +151,44 @@ async function writeTo(el, message, start, interval, charsPerInterval, mirrorToS
     // Start another write.
     return writeTo(el, message, start, interval, charsPerInterval, mirrorToStyle)
   }
+}
+
+/**
+ * 创建工作简介的展示框
+ *
+ * @return void
+ */
+function createWorkBox () {
+  // 避免重复执行该方法
+  if (workEl.getElementsByTagName('div').length) return false
+
+  workEl.innerHTML = '<div class="text">' + replaceURLs(workText) + '</div>' +
+    '<div class="md">' + replaceURLs(Markdown.markdown.toHTML(workText)) + '</div>'
+
+  workEl.classList.add('flipped')
+  workEl.scrollTop = 9999
+
+  let flipping = false
+
+  // 设置滚动监听，在滚动到一定程度时进行翻转，第三个参数设置为 true 是为了避免
+  // 在处理滚动的时候，能够在翻转前后页面的滚动效果一致
+  require('mouse-wheel')(workEl, async function (dx, dy) {
+    if (flipping) return false
+
+    let flipped = workEl.classList.contains('flipped')
+    let halfHeight = (workEl.scrollHeight - workEl.clientHeight) / 2
+    let passHalf = flipped ? (workEl.scrollTop < halfHeight) : (workEl.scrollTop > halfHeight)
+
+    if (passHalf) {
+      workEl.classList.toggle('flipped')
+      flipping = true
+      await Promise.delay(600)
+      workEl.scrollTop = flipped ? 0 : 9999
+      flipping = false
+    } else {
+      workEl.scrollTop += dy * (flipped ? -1 : 1)
+    }
+  }, true)
 }
 
 function skipAnimation () {
