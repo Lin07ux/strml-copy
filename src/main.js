@@ -6,8 +6,9 @@ import Markdown from 'markdown'
 
 import getPrefix from './lib/getPrefix.js'
 import replaceURLs from './lib/replaceURLs.js'
-import { default as writeChar, writeStyleChar } from './lib/writeChar.js'
+import { default as writeChar, writeStyleChar, batchHandleStyle } from './lib/writeChar.js'
 
+import pgpText from './text/pgp.txt'
 import workText from './text/work.txt'
 import preStyle from './css/prestyles.css'
 
@@ -98,6 +99,9 @@ async function startAnimation () {
     createWorkBox()
     await Promise.delay(1000)
     await writeTo(styleEl, styleText[2], 0, speed, 1, true)
+    await writeTo(pgpEl, pgpText, 0, speed, 32, false)
+    await writeTo(styleEl, styleText[3], 0, speed, 1, true)
+    done = true
   } catch (e) {
     if (e.message == 'SKIP IT') {
       skipAnimation()
@@ -160,7 +164,7 @@ async function writeTo(el, message, start, interval, charsPerInterval, mirrorToS
  */
 function createWorkBox () {
   // 避免重复执行该方法
-  if (workEl.getElementsByTagName('div').length) return false
+  if (workEl.getElementsByTagName('div').length) return
 
   workEl.innerHTML = '<div class="text">' + replaceURLs(workText) + '</div>' +
     '<div class="md">' + replaceURLs(Markdown.markdown.toHTML(workText)) + '</div>'
@@ -191,6 +195,29 @@ function createWorkBox () {
   }, true)
 }
 
-function skipAnimation () {
-  // TODO
+/**
+ * 跳过所有的动画
+ *
+ * @return {void}
+ */
+async function skipAnimation () {
+  if (done) return
+
+  done = true
+
+  // 一次性处理完成所有的样式
+  let txt = styleText.join('\n')
+  style.textContent = '#work-text * { ' + browserPrefix + 'transition: none; }' + txt
+  styleEl.innerHTML = batchHandleStyle(styleEl, txt)
+
+  // 设置工作经历和 pgp 文本
+  createWorkBox()
+  pgpEl.innerHTML = pgpText
+
+  // 将三个窗口都滚动到最底部
+  let start = Date.now()
+  do {
+    styleEl.scrollTop = workEl.scrollTop = pgpEl.scrollTop = 999999
+    await Promise.delay(16)
+  } while (Date.now() - start < 1000)
 }

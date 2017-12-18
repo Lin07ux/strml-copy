@@ -55,8 +55,21 @@ function resetInit (el) {
   fullText = { id: el.id, content: el.innerHTML, buffer: '' }
 }
 
-// 匹配样式值中设置的 px
-const pxRegex = /\dpx$/
+export function batchHandleStyle (el, style) {
+  let length = style.length
+
+  if (length) {
+    resetInit(el)
+
+    for (let i = 0; i < length; ++i) {
+      handleStyle(style[i])
+    }
+
+    return fullText.content + fullText.buffer
+  }
+
+  return ''
+}
 
 /**
  * 处理样式字符
@@ -95,7 +108,7 @@ function handleStyle (char) {
       break
     case 'x':
       fullText.buffer += 'x'
-      if (pxRegex.test(fullText.buffer)) {
+      if (fullText.buffer.slice(-2) === 'px') {
         fullText.buffer = fullText.buffer.slice(0, -2) + '<span class="px">px</span>'
       }
       break
