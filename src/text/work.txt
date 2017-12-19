@@ -1,8 +1,8 @@
 STRML.net
 =========
 
-Samuel Reed
-CTO, BitMEX (The Bitcoin Mercantile Exchange)
+Lin07ux
+PHP Development Engineer
 Full-Stack / NodeJS / DevOps
 
 Contact

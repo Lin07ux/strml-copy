@@ -5,7 +5,7 @@ var CleanWebpackPlugin = require('clean-webpack-plugin');
 
 var dist = path.join(__dirname, 'dist');
 var debug = process.env.NODE_ENV === "development";
-var assets = debug ? "" : "/assets/";
+var assets = debug ? "" : "./assets/";
 
 module.exports = {
   entry: "./src/main.js",
